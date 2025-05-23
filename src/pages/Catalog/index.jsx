@@ -1,11 +1,8 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
-import { FaSearch, FaFilter } from 'react-icons/fa';
+import { FaSearch } from 'react-icons/fa';
 import { fetchProducts, setFilters } from '../../store/slices/productsSlice';
-import ProductCard from '../../components/ProductCard';
-import LoadingSpinner from '../../components/LoadingSpinner';
-import ErrorMessage from '../../components/ErrorMessage';
 import debounce from 'lodash/debounce';
 
 const Container = styled.div`
@@ -62,46 +59,6 @@ const Select = styled.select`
   }
 `;
 
-const ProductsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 2rem;
-`;
-
-const NoProducts = styled.div`
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-  background: white;
-  border-radius: 8px;
-  margin-top: 2rem;
-`;
-
-const Pagination = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 2rem;
-`;
-
-const PageButton = styled.button`
-  padding: 0.5rem 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  background: ${props => props.active ? '#6366f1' : 'white'};
-  color: ${props => props.active ? 'white' : '#1f2937'};
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover:not(:disabled) {
-    background: ${props => props.active ? '#6366f1' : '#f3f4f6'};
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
 
 const categories = [
   { value: "", label: "Все категории" },
@@ -115,7 +72,7 @@ const categories = [
 
 const Catalog = () => {
   const dispatch = useDispatch();
-  const { items: products, status, error, pagination, filters } = useSelector((state) => state.products);
+  const { items: products, pagination, filters } = useSelector((state) => state.products);
   const [sortBy, setSortBy] = useState('name');
   const [category, setCategory] = useState(filters.category || 'all');
   const searchInputRef = useRef(null);
@@ -158,38 +115,6 @@ const Catalog = () => {
     dispatch(setFilters({ category: value }));
   };
 
-  const handlePageChange = (page) => {
-    dispatch(fetchProducts({
-      page,
-      limit: pagination.itemsPerPage,
-      category: category !== 'all' ? category : null,
-      search: searchValueRef.current || null
-    }));
-  };
-
-  const sortedProducts = useMemo(() => {
-    return [...products].sort((a, b) => {
-      switch (sortBy) {
-        case 'price-asc':
-          return a.price - b.price;
-        case 'price-desc':
-          return b.price - a.price;
-        case 'name':
-          return a.name.localeCompare(b.name);
-        default:
-          return 0;
-      }
-    });
-  }, [products, sortBy]);
-
-  if (status === 'loading') {
-    return <LoadingSpinner />;
-  }
-
-  if (status === 'failed') {
-    return <ErrorMessage message={error || 'Произошла ошибка при загрузке товаров'} />;
-  }
-
   return (
     <Container>
       <h1>Каталог товаров</h1>
@@ -215,45 +140,7 @@ const Catalog = () => {
           <option value="price-desc">По убыванию цены</option>
         </Select>
       </Filters>
-
-      {sortedProducts.length === 0 ? (
-        <NoProducts>
-          <h3>Товары не найдены</h3>
-          <p>Попробуйте изменить параметры поиска</p>
-        </NoProducts>
-      ) : (
-        <>
-          <ProductsGrid>
-            {sortedProducts.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </ProductsGrid>
-
-          <Pagination>
-            <PageButton
-              onClick={() => handlePageChange(pagination.currentPage - 1)}
-              disabled={pagination.currentPage === 1}
-            >
-              Назад
-            </PageButton>
-            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(page => (
-              <PageButton
-                key={page}
-                active={page === pagination.currentPage}
-                onClick={() => handlePageChange(page)}
-              >
-                {page}
-              </PageButton>
-            ))}
-            <PageButton
-              onClick={() => handlePageChange(pagination.currentPage + 1)}
-              disabled={pagination.currentPage === pagination.totalPages}
-            >
-              Вперед
-            </PageButton>
-          </Pagination>
-        </>
-      )}
+      <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%3Fid%3DOIP.oVAn8NKESosYKEGyahh3fQHaEo%26pid%3DApi&f=1&ipt=ca550041cf9b4f7d8698d7092c52a8e62a8f9e6f1be83305c2eecb742746832f&ipo=images" alt="" />
     </Container>
   );
 };
