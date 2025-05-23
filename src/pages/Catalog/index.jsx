@@ -1,9 +1,5 @@
-import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React from 'react';
 import styled from 'styled-components';
-import { FaSearch } from 'react-icons/fa';
-import { fetchProducts, setFilters } from '../../store/slices/productsSlice';
-import debounce from 'lodash/debounce';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -11,136 +7,88 @@ const Container = styled.div`
   padding: 2rem;
 `;
 
-const Filters = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
+const CategoryGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
 `;
 
-const SearchInput = styled.div`
-  flex: 1;
-  min-width: 300px;
+const CategoryCard = styled.div`
   position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
 
-  input {
-    width: 100%;
-    padding: 0.75rem 1rem 0.75rem 2.5rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 4px;
-    font-size: 1rem;
-
-    &:focus {
-      outline: none;
-      border-color: #6366f1;
-    }
-  }
-
-  svg {
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #718096;
+  &:hover {
+    transform: translateY(-4px);
   }
 `;
 
-const Select = styled.select`
-  padding: 0.75rem 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  font-size: 1rem;
-  background: white;
-  min-width: 200px;
-
-  &:focus {
-    outline: none;
-    border-color: #6366f1;
-  }
+const CategoryImage = styled.img`
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
 `;
 
+const CategoryTitle = styled.h3`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  margin: 0;
+  text-align: center;
+`;
 
 const categories = [
-  { value: "", label: "Все категории" },
-  { value: "Электроника", label: "Электроника" },
-  { value: "Одежда", label: "Одежда" },
-  { value: "Книги", label: "Книги" },
-  { value: "Обувь", label: "Обувь" },
-  { value: "Аксессуары", label: "Аксессуары" },
-  { value: "Игрушки", label: "Игрушки" }
+  {
+    id: 1,
+    name: "Электроника",
+    image: "https://images.unsplash.com/photo-1498049794561-7780e7231661?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 2,
+    name: "Одежда",
+    image: "https://images.unsplash.com/photo-1445205170230-053b83016050?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 3,
+    name: "Книги",
+    image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 4,
+    name: "Обувь",
+    image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 5,
+    name: "Аксессуары",
+    image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: 6,
+    name: "Игрушки",
+    image: "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+  }
 ];
 
 const Catalog = () => {
-  const dispatch = useDispatch();
-  const { items: products, pagination, filters } = useSelector((state) => state.products);
-  const [sortBy, setSortBy] = useState('name');
-  const [category, setCategory] = useState(filters.category || 'all');
-  const searchInputRef = useRef(null);
-  const searchValueRef = useRef(filters.search || '');
-
-  const debouncedSearch = useCallback(
-    debounce((value) => {
-      dispatch(setFilters({ search: value }));
-      dispatch(fetchProducts({
-        page: 1,
-        limit: pagination.itemsPerPage,
-        category: category !== 'all' ? category : null,
-        search: value || null
-      }));
-    }, 500),
-    [dispatch, category, pagination.itemsPerPage]
-  );
-
-  useEffect(() => {
-    dispatch(fetchProducts({
-      page: pagination.currentPage,
-      limit: pagination.itemsPerPage,
-      category: category !== 'all' ? category : null,
-      search: searchValueRef.current || null
-    }));
-  }, [dispatch, pagination.currentPage, category]);
-
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    searchValueRef.current = value;
-    if (searchInputRef.current) {
-      searchInputRef.current.value = value;
-    }
-    debouncedSearch(value);
-  };
-
-  const handleCategoryChange = (e) => {
-    const value = e.target.value;
-    setCategory(value);
-    dispatch(setFilters({ category: value }));
-  };
-
   return (
     <Container>
-      <h1>Каталог товаров</h1>
-      <Filters>
-        <SearchInput>
-          <FaSearch />
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Поиск товаров..."
-            defaultValue={filters.search || ''}
-            onChange={handleSearch}
-          />
-        </SearchInput>
-        <Select value={category} onChange={handleCategoryChange}>
-          {categories.map(cat => (
-            <option key={cat.value} value={cat.value}>{cat.label}</option>
-          ))}
-        </Select>
-        <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-          <option value="name">По названию</option>
-          <option value="price-asc">По возрастанию цены</option>
-          <option value="price-desc">По убыванию цены</option>
-        </Select>
-      </Filters>
-      <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%3Fid%3DOIP.oVAn8NKESosYKEGyahh3fQHaEo%26pid%3DApi&f=1&ipt=ca550041cf9b4f7d8698d7092c52a8e62a8f9e6f1be83305c2eecb742746832f&ipo=images" alt="" />
+      <h1>Каталог категорий</h1>
+      <CategoryGrid>
+        {categories.map(category => (
+          <CategoryCard key={category.id}>
+            <CategoryImage src={category.image} alt={category.name} />
+            <CategoryTitle>{category.name}</CategoryTitle>
+          </CategoryCard>
+        ))}
+      </CategoryGrid>
     </Container>
   );
 };
