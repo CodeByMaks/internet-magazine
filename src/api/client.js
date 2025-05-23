@@ -8,7 +8,7 @@ const cache = new Map();
 
 const client = axios.create({
   baseURL: import.meta.env.PROD 
-    ? '/api'  // В продакшене используем относительный путь
+    ? 'https://internet-magazine-rosy.vercel.app/api'  // В продакшене используем полный URL
     : 'http://localhost:3002/api', // В разработке используем локальный сервер
   headers: {
     'Content-Type': 'application/json',
