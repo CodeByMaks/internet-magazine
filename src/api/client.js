@@ -8,10 +8,13 @@ const cache = new Map();
 
 const client = axios.create({
   baseURL: import.meta.env.PROD 
-    ? 'https://internet-magazine-rosy.vercel.app/api'  // В продакшене используем полный URL
-    : 'http://localhost:3002/api', // В разработке используем локальный сервер
+    ? 'https://internet-magazine-4jwp.vercel.app/api'  // Исправляем URL на текущий домен
+    : 'http://localhost:3002/api',
   headers: {
     'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   },
   withCredentials: true, // Включаем поддержку cookies
 });

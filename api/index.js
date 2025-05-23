@@ -4,7 +4,15 @@ const data = require('../src/data/db.json');
 
 const app = express();
 
-app.use(cors());
+// Настройка CORS
+const corsOptions = {
+  origin: ['https://internet-magazine-4jwp.vercel.app', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Получение всех продуктов
