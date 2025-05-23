@@ -1,0 +1,9 @@
+{
+  "/api/*": "/$1",
+  "/products": "/products",
+  "/products/:id": "/products/:id",
+  "/categories": "/categories",
+  "/cart": "/cart",
+  "/wishlist": "/wishlist",
+  "/users": "/users"
+} 
