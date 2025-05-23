@@ -6,22 +6,35 @@ const app = express();
 
 // Настройка CORS
 const corsOptions = {
-  origin: ['https://internet-magazine-4jwp.vercel.app', 'http://localhost:3000'],
+  origin: 'https://internet-magazine-4jwp.vercel.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Middleware для логирования запросов
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
 // Получение всех продуктов
 app.get('/api/products', (req, res) => {
   try {
-    res.json(data.products || []);
+    if (!data.products) {
+      throw new Error('Products data not found');
+    }
+    res.json(data.products);
   } catch (error) {
     console.error('Ошибка при получении продуктов:', error);
-    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    res.status(500).json({ 
+      error: 'Внутренняя ошибка сервера',
+      message: error.message 
+    });
   }
 });
 
@@ -80,7 +93,18 @@ app.get('/api/categories/:categoryId/products', (req, res) => {
 // Обработка ошибок
 app.use((err, req, res, next) => {
   console.error('Ошибка сервера:', err);
-  res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+  res.status(500).json({ 
+    error: 'Внутренняя ошибка сервера',
+    message: err.message
+  });
+});
+
+// Обработка 404
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: 'Not Found',
+    message: 'Запрашиваемый ресурс не найден'
+  });
 });
 
 module.exports = app; 

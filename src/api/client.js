@@ -8,15 +8,12 @@ const cache = new Map();
 
 const client = axios.create({
   baseURL: import.meta.env.PROD 
-    ? 'https://internet-magazine-4jwp.vercel.app/api'  // Исправляем URL на текущий домен
+    ? 'https://internet-magazine-4jwp.vercel.app/api'  // Используем текущий домен
     : 'http://localhost:3002/api',
   headers: {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    'Content-Type': 'application/json'
   },
-  withCredentials: true, // Включаем поддержку cookies
+  withCredentials: true
 });
 
 // Функция для получения токена из cookie
@@ -56,14 +53,7 @@ const saveToCache = (url, data) => {
 // Добавляем перехватчик запросов
 client.interceptors.request.use(
   (config) => {
-    console.log('Отправляем запрос:', {
-      url: config.url,
-      method: config.method,
-      baseURL: config.baseURL,
-      headers: config.headers
-    });
-
-    // Проверяем кэш для GET запросов
+    // Проверяем кэш только для GET запросов
     if (config.method === 'get') {
       const cachedData = checkCache(config.url);
       if (cachedData) {
@@ -81,80 +71,44 @@ client.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error('Ошибка в перехватчике запросов:', error);
     return Promise.reject(error);
   }
 );
 
-// Функция для повторных попыток
-const retryRequest = async (error, retryCount = 0) => {
-  if (retryCount >= MAX_RETRIES) {
-    return Promise.reject(error);
-  }
-
-  await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)));
-  return client(error.config);
-};
-
 // Добавляем перехватчик ответов
 client.interceptors.response.use(
   (response) => {
-    console.log('Получен ответ:', {
-      url: response.config.url,
-      status: response.status,
-      data: response.data
-    });
-
-    // Сохраняем в кэш для GET запросов
     if (response.config.method === 'get') {
       saveToCache(response.config.url, response.data);
     }
-
     return response;
   },
   async (error) => {
-    // Обработка кэша
     if (error.__CACHE_HIT__) {
       return { data: error.data };
     }
 
-    // Повторные попытки для сетевых ошибок
-    if (!error.response && error.config) {
-      return retryRequest(error);
+    // Обработка CORS ошибок
+    if (error.message && error.message.includes('CORS')) {
+      console.error('CORS ошибка:', error.message);
+      return Promise.reject(new Error('Ошибка доступа к API'));
     }
 
-    if (error.response) {
-      console.error('Ошибка с ответом от сервера:', {
-        url: error.config.url,
-        status: error.response.status,
-        data: error.response.data
-      });
-
-      switch (error.response.status) {
-        case 401:
-          removeTokenCookie();
-          window.location.href = '/auth';
-          break;
-        case 403:
-          console.error('Доступ запрещен');
-          break;
-        case 404:
-          console.error('Ресурс не найден:', error.config.url);
-          break;
-        case 500:
-          console.error('Ошибка сервера:', error.response.data);
-          break;
-        default:
-          console.error('Ошибка:', error.response.data);
+    // Обработка сетевых ошибок
+    if (!error.response) {
+      if (error.config && error.config.retryCount < MAX_RETRIES) {
+        error.config.retryCount = (error.config.retryCount || 0) + 1;
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * error.config.retryCount));
+        return client(error.config);
       }
-    } else if (error.request) {
-      console.error('Нет ответа от сервера:', {
-        url: error.config.url,
-        request: error.request
-      });
-    } else {
-      console.error('Ошибка при настройке запроса:', error.message);
+      return Promise.reject(new Error('Ошибка сети'));
     }
+
+    // Обработка ошибок сервера
+    if (error.response.status === 500) {
+      return Promise.reject(new Error('Ошибка сервера'));
+    }
+
     return Promise.reject(error);
   }
 );

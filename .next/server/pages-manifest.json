@@ -1,0 +1,12 @@
+{
+  "/Admin": "pages/Admin.js",
+  "/Auth": "pages/Auth.js",
+  "/Catalog": "pages/Catalog.js",
+  "/Cart": "pages/Cart.js",
+  "/ProductDetails": "pages/ProductDetails.js",
+  "/Profile": "pages/Profile.js",
+  "/Wishlist": "pages/Wishlist.js",
+  "/_app": "pages/_app.js",
+  "/_error": "pages/_error.js",
+  "/_document": "pages/_document.js"
+}
