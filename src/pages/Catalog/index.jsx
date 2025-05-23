@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { FaSearch, FaFilter } from 'react-icons/fa';
@@ -6,6 +6,7 @@ import { fetchProducts, setFilters } from '../../store/slices/productsSlice';
 import ProductCard from '../../components/ProductCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorMessage from '../../components/ErrorMessage';
+import debounce from 'lodash/debounce';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -115,23 +116,40 @@ const categories = [
 const Catalog = () => {
   const dispatch = useDispatch();
   const { items: products, status, error, pagination, filters } = useSelector((state) => state.products);
-  const [searchQuery, setSearchQuery] = useState(filters.search || '');
   const [sortBy, setSortBy] = useState('name');
   const [category, setCategory] = useState(filters.category || 'all');
+  const searchInputRef = useRef(null);
+  const searchValueRef = useRef(filters.search || '');
+
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      dispatch(setFilters({ search: value }));
+      dispatch(fetchProducts({
+        page: 1,
+        limit: pagination.itemsPerPage,
+        category: category !== 'all' ? category : null,
+        search: value || null
+      }));
+    }, 500),
+    [dispatch, category, pagination.itemsPerPage]
+  );
 
   useEffect(() => {
     dispatch(fetchProducts({
       page: pagination.currentPage,
       limit: pagination.itemsPerPage,
       category: category !== 'all' ? category : null,
-      search: searchQuery || null
+      search: searchValueRef.current || null
     }));
-  }, [dispatch, pagination.currentPage, category, searchQuery]);
+  }, [dispatch, pagination.currentPage, category]);
 
   const handleSearch = (e) => {
     const value = e.target.value;
-    setSearchQuery(value);
-    dispatch(setFilters({ search: value }));
+    searchValueRef.current = value;
+    if (searchInputRef.current) {
+      searchInputRef.current.value = value;
+    }
+    debouncedSearch(value);
   };
 
   const handleCategoryChange = (e) => {
@@ -145,7 +163,7 @@ const Catalog = () => {
       page,
       limit: pagination.itemsPerPage,
       category: category !== 'all' ? category : null,
-      search: searchQuery || null
+      search: searchValueRef.current || null
     }));
   };
 
@@ -179,9 +197,10 @@ const Catalog = () => {
         <SearchInput>
           <FaSearch />
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Поиск товаров..."
-            value={searchQuery}
+            defaultValue={filters.search || ''}
             onChange={handleSearch}
           />
         </SearchInput>

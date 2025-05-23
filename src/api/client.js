@@ -7,7 +7,9 @@ const RETRY_DELAY = 1000;
 const cache = new Map();
 
 const client = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:3002'}/api`,
+  baseURL: import.meta.env.PROD 
+    ? '/api'  // В продакшене используем относительный путь
+    : 'http://localhost:3002/api', // В разработке используем локальный сервер
   headers: {
     'Content-Type': 'application/json',
   },

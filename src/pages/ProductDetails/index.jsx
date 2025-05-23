@@ -210,6 +210,7 @@ const ProductDetails = () => {
   const [notificationType, setNotificationType] = useState('success');
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [selectedColor, setSelectedColor] = useState(null);
 
   useEffect(() => {
